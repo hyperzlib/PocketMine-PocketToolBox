@@ -1,0 +1,12 @@
+﻿name: LuDaShi
+main: LuDaShi\Main
+version: 0.1.9
+api: [1.12.0]
+load: POSTWORLD
+author: hyperzlib
+description: 
+commands:
+ ludashi:
+  description: "鲁大师主命令"
+  usage: "/test"
+  permission: op
