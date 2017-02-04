@@ -109,8 +109,10 @@ class test{
 		//算法1
 		sleep(5);
 		$list = glob('../*.pid');
-		if(count($list)>1){
-			$point['server'] = (150 - intval(count($list))) * 10;
+		$num = 0;
+		foreach($list as $one){$num++;}
+		if($num != 0){
+			$point['server'] = (150 - $num) * 10;
 		} else { //算法2
 			$port = $main->getServer()->getPort();
 			$threads = array();
