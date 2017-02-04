@@ -124,12 +124,21 @@ class test{
 			
 			//启动线程
 			$k = 0;
+			$ct=0;
+			$trun=[];
 			foreach($threads as $thread){
 				$main->getLogger()->info(TextFormat::AQUA."线程".$k.'已启动！');
 				$thread->start();
 				$k ++;
+				$ct++;
+				$trun[]=$thread;
+				if($ct>10){
+					$ct=0;
+					foreach($trun as $t){$t->join();}
+					$trun=[];
+				}
 			}
-			
+			unset($trun);
 			//回收线程
 			$done = false;
 			do{

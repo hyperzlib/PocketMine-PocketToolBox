@@ -28,6 +28,7 @@ class ServerTest extends Thread{
 				$this->pcount++;
 				sleep(3);
 			}
+			socket_close($sock);
 		}
 		$this->isdone = 1;
 	}
