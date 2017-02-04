@@ -72,31 +72,31 @@ class test{
 		$str = str_repeat('a', 1024*1024);
 		$timestart = gettimeofday();
 		$fp = fopen('test.txt','w');
-		for($i=0;$i<=1024;$i++){
+		for($i=0;$i<=20;$i++){
 			fwrite($fp, $str);
 		}
 		fclose($fp);
 		$timestop = gettimeofday();
 		$timeuse = ($timestop["usec"]-$timestart["usec"])/1000000+$timestop["sec"]-$timestart["sec"];
-		$speed[0] = 1024/$timeuse;
+		$speed[0] = 20/$timeuse;
 		
 		//2.读取
 		$timestart = gettimeofday();
 		$fp = fopen('test.txt','r');
-		for($i=0;$i<=1024;$i++){
+		for($i=0;$i<=20;$i++){
 			$str = fread($fp, 1024*1024);
 		}
 		fclose($fp);
 		$timestop = gettimeofday();
 		$timeuse = ($timestop["usec"]-$timestart["usec"])/1000000+$timestop["sec"]-$timestart["sec"];
-		$speed[1] = 1024/$timeuse;
+		$speed[1] = 20/$timeuse;
 		
 		//3.删除
 		$timestart = gettimeofday();
 		@unlink('test.txt');
 		$timestop = gettimeofday();
 		$timeuse = ($timestop["usec"]-$timestart["usec"])/1000000+$timestop["sec"]-$timestart["sec"];
-		$speed[2] = 1024/$timeuse;
+		$speed[2] = 20/$timeuse;
 		
 		unset($str);
 		$point['io'] = round($speed[0]*10) + round($speed[1]*10) + round($speed[2]*10);
@@ -112,8 +112,8 @@ class test{
 			$num++;
 		}
 		unset($list);
-		if($num != 0){
-			$point['server'] = (150 - $num) * 10;
+		if(true){
+			$point['server'] = (150-$num)*10;
 		} else { //算法2
 			$port = $main->getServer()->getPort();
 			$threads = array();
