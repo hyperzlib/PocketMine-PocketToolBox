@@ -96,7 +96,7 @@ class ServerStatus extends PluginTask{
 			$info = $this->main->thread->info;
 			if(preg_match('/win/', strtolower(PHP_OS))){
 				$msg = '§aCPU使用率：' . $info['cpuuse'] . '%，§b内存已使用：' . round(($info['ramuse'])/1024) . 'MB，§c内存可用：' . round($info['ramfree']/1024) . 'MB，§d内存使用率：' . round(($info['ramuse']/$info['ramall'])*100) . '%';
-			} else {
+			} elseif($info['ramuse']!=0) {
 				$msg = '§b内存已使用：' . round(($info['ramuse'])/1024) . 'MB，§c内存可用：' . round($info['ramfree']/1024) . 'MB，§d内存使用率：' . round(($info['ramuse']/$info['ramall'])*100) . '%';
 			}
 			$this->main->getServer()->broadcastMessage($msg);
