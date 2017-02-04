@@ -1,6 +1,5 @@
 <?php
 namespace LuDaShi;
-
 use pocketmine\utils\Config;
 use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
@@ -9,7 +8,6 @@ use pocketmine\utils\TextFormat;
 use pocketmine\event\Listener;
 use pocketmine\math\Vector3;
 use LuDaShi\ServerTest;
-
 class test{
 	public $pcount = array(),$isdone = array(),$ip;
 	
@@ -110,7 +108,10 @@ class test{
 		sleep(5);
 		$list = glob('../*.pid');
 		$num = 0;
-		foreach($list as $one){$num++;}
+		foreach($list as $one){
+			$num++;
+		}
+		unset($list);
 		if($num != 0){
 			$point['server'] = (150 - $num) * 10;
 		} else { //算法2
@@ -181,12 +182,10 @@ class test{
 		curl_setopt($ch , CURLOPT_RETURNTRANSFER, 1);
 		curl_setopt($ch , CURLOPT_POST, 1);
 		curl_setopt($ch , CURLOPT_POSTFIELDS, $post_data);
-
 		$timestart = gettimeofday();
 		$output = curl_exec($ch);
 		$timestop = gettimeofday();
 		$timeuse = ($timestop["usec"]-$timestart["usec"])/1000000+$timestop["sec"]-$timestart["sec"];
-
 		curl_close($ch);
 		$speed[0] = 1024/$timeuse;
 		
@@ -197,12 +196,10 @@ class test{
 		curl_setopt($ch , CURLOPT_URL , $url);
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 		curl_setopt($ch, CURLOPT_HEADER, 0);
-
 		$timestart = gettimeofday();
 		$output = curl_exec($ch);
 		$timestop = gettimeofday();
 		$timeuse = ($timestop["usec"]-$timestart["usec"])/1000000+$timestop["sec"]-$timestart["sec"];
-
 		curl_close($ch);
 		$speed[1] = strlen($output)/1024/$timeuse;
 		

@@ -1,9 +1,7 @@
 <?php
 namespace LuDaShi;
-
 use Thread;
 use LuDaShi\test;
-
 class ServerTest extends Thread{
 	private $portmin,$portmax,$c,$isdone = 0,$pcount = 0;
 	

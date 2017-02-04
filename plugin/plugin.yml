@@ -1,6 +1,6 @@
-﻿name: LuDaShi
+name: LuDaShi
 main: LuDaShi\Main
-version: 0.1.9
+version: 0.2.1
 api: [1.12.0]
 load: POSTWORLD
 author: hyperzlib
