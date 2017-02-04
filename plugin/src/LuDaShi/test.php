@@ -132,7 +132,7 @@ class test{
 				$k ++;
 				$ct++;
 				$trun[]=$thread;
-				if($ct>15){
+				if($ct>10){
 					$ct=0;
 					foreach($trun as $t){$t->join();}
 					$trun=[];
