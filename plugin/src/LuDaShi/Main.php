@@ -15,8 +15,8 @@ use LuDaShi\test;
 use LuDaShi\Status;
 
 class Main extends PluginBase implements Listener{
-    private $maxPlayers,$uploadurl,$status;
-	public $chatmode = array(),$cfg,$thread;
+    private $maxPlayers,$status;
+	public $chatmode = array(),$cfg,$thread,$uploadurl;
 
 	public function onEnable(){
 		$day = date("d");
