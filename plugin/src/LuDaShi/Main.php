@@ -61,12 +61,34 @@ class Main extends PluginBase implements Listener{
 							$test->start($this);
 							return true;
 							break;
+						case 'ischaokai':
+							$memlimit = intval(str_replace('M','',ini_get('memory_limit')))*1024;
+							$memfree = $memlimit - memory_get_usage();
+							if(($this->thread->info['ramfree']) > $memfree){
+								$this->getLogger()->info(TextFormat::GREEN.'你的服务器看样子没有超开。');
+							} else {
+								$ramtruefree = $this->thread->info['ramfree'];
+								$progress = round((1 - (($ramfree - $ramtruefree) / $ramfree))*100);
+								$this->getLogger()->info(TextFormat::RED.'检测到服务器超开，超开比例：' . $progress . '%！');
+							}
+							return true;
+							break;
+						case 'status':
+							$info = $this->thread->info;
+							if($info['ramuse']!=0){
+								$msg = '§aCPU使用率：' . $info['cpuuse'] . '%，§b内存已使用：' . round(($info['ramuse'])/1024) . 'MB，§c内存可用：' . round($info['ramfree']/1024) . 'MB，§d内存使用率：' . round(($info['ramuse']/$info['ramall'])*100) . '%';
+								$this->getLogger()->info($msg);
+							}
+							return true;
+							break;
 						default:
 							$this->commandHelp();
+							return true;
 							break;
 					}
 				} else {
 					$this->commandHelp();
+					return true;
 				}
 				break;
 		}
@@ -75,7 +97,8 @@ class Main extends PluginBase implements Listener{
 	public function commandHelp(){
 		$this->getLogger()->info(TextFormat::GREEN.'----------鲁大师插件----------');
 		$this->getLogger()->info(TextFormat::GOLD.'/ludashi test	开始鲁大师性能测试');
-		
+		$this->getLogger()->info(TextFormat::GOLD.'/ludashi ischaokai	鲁大师超开判断');
+		$this->getLogger()->info(TextFormat::GOLD.'/ludashi status	 获取当前服务器状态');
 	}
 		
 }
@@ -94,12 +117,10 @@ class ServerStatus extends PluginTask{
 	public function onRun($currentTick){
 		if($this->main->thread->isdone){
 			$info = $this->main->thread->info;
-			if(preg_match('/win/', strtolower(PHP_OS))){
+			if($info['ramuse']!=0){
 				$msg = '§aCPU使用率：' . $info['cpuuse'] . '%，§b内存已使用：' . round(($info['ramuse'])/1024) . 'MB，§c内存可用：' . round($info['ramfree']/1024) . 'MB，§d内存使用率：' . round(($info['ramuse']/$info['ramall'])*100) . '%';
-			} elseif($info['ramuse']!=0) {
-				$msg = '§b内存已使用：' . round(($info['ramuse'])/1024) . 'MB，§c内存可用：' . round($info['ramfree']/1024) . 'MB，§d内存使用率：' . round(($info['ramuse']/$info['ramall'])*100) . '%';
+				$this->main->getServer()->broadcastMessage($msg);
 			}
-			$this->main->getServer()->broadcastMessage($msg);
 		}
 	}
 }

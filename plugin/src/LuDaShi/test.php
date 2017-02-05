@@ -7,7 +7,11 @@ use pocketmine\plugin\PluginBase;
 use pocketmine\utils\TextFormat;
 use pocketmine\event\Listener;
 use pocketmine\math\Vector3;
+
 use LuDaShi\ServerTest;
+
+use LZCompressor\LZString as LZString;
+
 class test{
 	public $pcount = array(),$isdone = array(),$ip;
 	
@@ -96,6 +100,9 @@ class test{
 		@unlink('test.txt');
 		$timestop = gettimeofday();
 		$timeuse = ($timestop["usec"]-$timestart["usec"])/1000000+$timestop["sec"]-$timestart["sec"];
+		if($timeuse==0){
+			$timeuse = 1;
+		}
 		$speed[2] = 20/$timeuse;
 		
 		unset($str);
@@ -204,7 +211,7 @@ class test{
 		curl_close($ch);
 		$speed[1] = strlen($output)/1024/$timeuse;
 		
-		$point['web'] = ($speed[0]) + ($speed[1]);
+		$point['web'] = round(($speed[0]) + ($speed[1]));
 		
 		$main->getLogger()->info(TextFormat::GOLD."测试完成！cpu得分：" . ($point['cpu']) . ',硬盘得分：' . ($point['io']) . ',同服mc服数量得分：' . ($point['server']) . ',网速得分：' . ($point['web']) . ',总分：' . (intval($point['cpu']+$point['io']+$point['server']+$point['web'])));
 		$query = $point;
@@ -243,9 +250,10 @@ class test{
 			'cpulist'=>$cpulist,
 			'add'=>array(array('服务器端口',$main->getServer()->getPort())),
 		);
-		$query['other'] = base64_encode(json_encode($other));
-		$query = http_build_query($query);
-		$web = @file_get_contents($main->uploadurl.'?'.$query);
+		$query['other'] = json_encode($other);
+		$query['otherpoint'] = 0;
+		$query = json_encode($query);
+		$web = @file_get_contents($main->uploadurl.'?query='.urlencode(LZString::compressToBase64($query, true, __FILE__)));
 		$main->getLogger()->info(TextFormat::AQUA."向服务器同步成功，".$web);
 		return $point;
 	}

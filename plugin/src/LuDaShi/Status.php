@@ -33,14 +33,19 @@ class Status extends Thread{
 			}while(true);
 		} else {
 			do{
-				$str = @file_get_contents('/proc/meminfo');
-				preg_match_all("/MemTotal\s{0,}\:+\s{0,}([\d\.]+).+?MemFree\s{0,}\:+\s{0,}([\d\.]+).+?Cached\s{0,}\:+\s{0,}([\d\.]+).+?SwapTotal\s{0,}\:+\s{0,}([\d\.]+).+?SwapFree\s{0,}\:+\s{0,}([\d\.]+)/s", $str, $buf);
-				preg_match_all("/Buffers\s{0,}\:+\s{0,}([\d\.]+)/s", $str, $buffers);
-				$this->info['ramall'] = $buf[1][0];
-				$this->info['ramfree'] = $buf[2][0];
-				$this->info['ramuse'] = $buf[1][0]-$buf[2][0];
-				$this->info['cpuuse'] = '不支持';
-				$this->isdone = true;
+				$top = shell_exec('top -n 1 -b');
+				$top = explode("\n",$top);
+				$arr = array();
+				foreach($top as $one){
+					if(preg_match('/:/',$one)){
+						$tmp = explode(':',$one);
+						$arr[trim($tmp[0])] = explode(',',$tmp[1]);
+					}
+				}
+				$this->info['cpuuse'] = intval(str_replace('%us','',trim($arr['Cpu(s)'][0])));
+				$this->info['ramall'] = intval(str_replace('k total','',trim($arr['Mem'][0])));
+				$this->info['ramuse'] = intval(str_replace('k used','',trim($arr['Mem'][1])));
+				$this->info['ramfree'] = intval(str_replace('k free','',trim($arr['Mem'][2])));
 				sleep(2);
 			}while($this->isclose==false);
 		}
