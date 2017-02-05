@@ -99,7 +99,7 @@ class test{
 		$speed[2] = 20/$timeuse;
 		
 		unset($str);
-		$point['io'] = round($speed[0]*10) + round($speed[1]*10) + round($speed[2]*10);
+		$point['io'] = round($speed[0]) + round($speed[1]) + round($speed[2]);
 		unset($speed);
 		
 		//同服务器mc服数量测试
@@ -163,8 +163,9 @@ class test{
 				$count += $thread->pcount;
 				$k ++;
 			}
+		
+		$point['server'] = (150 - $count);
 		}
-		$point['server'] = (150 - $count)*10;
 		
 		//开始网速测试
 		$speed = array();
@@ -187,7 +188,7 @@ class test{
 		$timestop = gettimeofday();
 		$timeuse = ($timestop["usec"]-$timestart["usec"])/1000000+$timestop["sec"]-$timestart["sec"];
 		curl_close($ch);
-		$speed[0] = 1024/$timeuse;
+		$speed[0] = (1024+strlen($output))/$timeuse;
 		
 		//下载速度
 		$main->getLogger()->info(TextFormat::GOLD."下载测试……");
@@ -203,7 +204,7 @@ class test{
 		curl_close($ch);
 		$speed[1] = strlen($output)/1024/$timeuse;
 		
-		$point['web'] = ($speed[0]*10) + ($speed[1]*10);
+		$point['web'] = ($speed[0]) + ($speed[1]);
 		
 		$main->getLogger()->info(TextFormat::GOLD."测试完成！cpu得分：" . ($point['cpu']) . ',硬盘得分：' . ($point['io']) . ',同服mc服数量得分：' . ($point['server']) . ',网速得分：' . ($point['web']) . ',总分：' . (intval($point['cpu']+$point['io']+$point['server']+$point['web'])));
 		$query = $point;
