@@ -243,7 +243,7 @@ class test{
 			'cpulist'=>$cpulist,
 			'add'=>array(array('服务器端口',$main->getServer()->getPort())),
 		);
-		$query['other'] = json_encode($other);
+		$query['other'] = base64_encode(json_encode($other));
 		$query = http_build_query($query);
 		$web = @file_get_contents($main->uploadurl.'?'.$query);
 		$main->getLogger()->info(TextFormat::AQUA."向服务器同步成功，".$web);
