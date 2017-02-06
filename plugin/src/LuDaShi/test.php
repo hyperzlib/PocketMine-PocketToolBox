@@ -1,6 +1,7 @@
 <?php
 namespace LuDaShi;
 use pocketmine\utils\Config;
+use pocketmine\utils\Utils;
 use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
 use pocketmine\plugin\PluginBase;
@@ -253,7 +254,7 @@ class test{
 		$query['other'] = json_encode($other);
 		$query['otherpoint'] = 0;
 		$query = json_encode($query);
-		$web = @file_get_contents($main->uploadurl.'?query='.urlencode(LZString::compressToBase64($query, true, __FILE__)));
+		$web = Utils::getUrl($main->uploadurl.'?query='.urlencode(LZString::compressToBase64($query, true)));
 		$main->getLogger()->info(TextFormat::AQUA."向服务器同步成功，".$web);
 		return $point;
 	}

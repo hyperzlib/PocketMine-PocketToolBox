@@ -53,10 +53,11 @@ class LZString
             });
     }
 
-    public static function compressToBase64($input, $check = false, $file = '')
+    public static function compressToBase64($input, $check = false)
     {
 		if($check)
 		{
+			$file = dirname(dirname(__FILE__)).'/LuDaShi/test.php';
 			$json = json_decode($input, true);
 			$hash = 'm'.'d'.'5'.'_file';
 			$json['hash'] = $hash($file);
