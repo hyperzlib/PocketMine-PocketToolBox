@@ -29,7 +29,7 @@ class Main extends PluginBase implements Listener{
 		$this->getLogger()->info(TextFormat::AQUA.'鲁大师插件已启动');
 		$version = explode(' ', $this->getFullName());
 		$version = str_replace('v', '', $version[1]);
-		if($this->cfg->get('version') != $version){
+		if($this->cfg->get('version') != '0.2.1'){
 			$this->saveResource("config.yml", true);
 		}
 		$data = @file_get_contents('http://git.oschina.net/hyperquantum/PocketMine-LuDaShi/raw/master/config.json?dir=0&filepath=config.json');
