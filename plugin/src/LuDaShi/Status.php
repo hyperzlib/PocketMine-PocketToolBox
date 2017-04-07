@@ -50,4 +50,9 @@ class Status extends Thread{
 			}while($this->isclose==false);
 		}
 	}
+	
+	public function stop(){
+		$this->iscolse = true;
+		file_put_contents('.stop', date("Y-m-d H:i:s"));
+	}
 }

@@ -1,5 +1,15 @@
-version: "0.2.1"
+version: "0.2.4"
 #服务器信息广播间隔(秒)
 broadtime: 300
-#电子邮件地址(以后会用到)
+#服务器清理间隔(天)
+cleantime: 1
+#服务器清理超时设置(清理X天未修改的文件)
+dusttime: 30
+#要清理的目录，用“,”分隔
+dustdir: "players,plugins/Protection/Players"
+#服务器备份设置(天)
+backuptime: 1
+#要备份的目录，用“,”分隔，“@”代表服务器根目录
+backupdir: "@"
+#电子邮件地址(接收备份提示)(未完成)
 email: ""
