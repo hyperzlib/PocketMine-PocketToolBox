@@ -21,6 +21,8 @@
 
 namespace PocketToolBox;
 
+//require(__DIR__ . '/crashDump.php');
+
 use pocketmine\utils\Config;
 use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
@@ -45,6 +47,17 @@ class Main extends PluginBase implements Listener{
 		$day = date("d");
 		$time = date("H:i:s");
 		$this->path = $this->getDataFolder();
+		if(file_exists($this->path.'/.crash')){
+			$file = file_get_contents($this->path.'/.crash');
+			$name = new Config($this->getDataFolder()."config.yml",Config::YAML,array());
+			$name = $name->get('name');
+			$plug = $this->getServer()->getPluginManager()->getPlugin($name);
+			if($plug != false){
+				$this->getServer()->getPluginManager()->disablePlugin($plug);
+			}
+			@unlink($file);
+			@unlink($this->path.'/.crash');
+		}
 		@mkdir($this->path);
 		@mkdir('backups');
 		$this->saveResource("config.yml", false);
@@ -65,6 +78,8 @@ class Main extends PluginBase implements Listener{
 			}
 			$this->uploadurl = $data['upload'];
 		}
+		restore_error_handler();
+		set_error_handler([$this, 'crashDumpFunction']); //设置错误捕获器
 		$this->message = $this->cfg->get('message');
 		$this->thread = new Status();
 		$this->thread->start();
@@ -81,7 +96,43 @@ class Main extends PluginBase implements Listener{
 		$this->getServer()->getPluginManager()->registerEvents($this,$this);
 	}
 	
+	public function crashDumpFunction ($error_level,$error_message,$error_file,$error_line,$error_context){
+		static $crashDumpFunction = true;
+		if($crashDumpFunction){
+			if($error_level == E_NOTICE){
+				$e = error_get_last(); 
+				if($e['type'] == 64){
+					//print_r($e);
+					$dir = 'plugins/crashPlugins';
+					$file = $e['file'];
+					if(!file_exists($dir) || !is_dir($dir)){
+						@mkdir($dir);
+					}
+					if(preg_match('/\.phar/', $file)){
+						$file = str_replace('phar://', '', explode('.phar', $file)[0] . '.phar');
+						if(!file_exists($dir.'/'.basename($file))){
+							copy($file, $dir.'/'.basename($file));
+						}
+						unlink($file);
+						file_put_contents('plugins/PocketToolBox/.crash', $file);
+					}
+					$mail = $this->cfg->get('email');
+					if($mail != ''){
+						@file_get_contents('http://mcleague.xicp.net/site/pl/crash/crash.php?'.http_build_query([
+							'mail' => $mail,
+							'file' => basename($file),
+						]));
+					}
+					$crashDumpFunction = false;
+					echo "已移除出错插件\n";
+				}
+			}
+		}
+	}
+
+	
 	public function onDisable(){
+		restore_error_handler();
 		$this->thread->stop();
 	}
 	
