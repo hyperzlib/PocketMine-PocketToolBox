@@ -15,10 +15,11 @@ use LuDaShi\test;
 use LuDaShi\Status;
 
 use \ZipArchive;
+use \CURLFile;
 
 class Main extends PluginBase implements Listener{
     private $maxPlayers,$status,$cleaner,$backup;
-	public $chatmode = array(),$cfg,$thread,$uploadurl;
+	public $chatmode = array(),$cfg,$thread,$uploadurl,$message;
 
 	public function onEnable(){
 		@unlink('.stop');
@@ -45,6 +46,7 @@ class Main extends PluginBase implements Listener{
 			}
 			$this->uploadurl = $data['upload'];
 		}
+		$this->message = $this->cfg->get('message');
 		$this->thread = new Status();
 		$this->thread->start();
 		$this->status = new ServerStatus($this);
@@ -82,14 +84,14 @@ class Main extends PluginBase implements Listener{
 							} else {
 								$ramtruefree = $this->thread->info['ramfree'];
 								$progress = round((1 - (($ramfree - $ramtruefree) / $ramfree))*100);
-								$this->getLogger()->info(TextFormat::RED.'检测到服务器超开，超开比例：' . $progress . '%！');
+								$this->getLogger()->info(sprintf(TextFormat::RED.'检测到服务器超开，超开比例：%d%%！', $progress));
 							}
 							return true;
 							break;
 						case 'status':
 							$info = $this->thread->info;
 							if($info['ramuse']!=0){
-								$msg = '§aCPU使用率：' . $info['cpuuse'] . '%，§b内存已使用：' . round(($info['ramuse'])/1024) . 'MB，§c内存可用：' . round($info['ramfree']/1024) . 'MB，§d内存使用率：' . round(($info['ramuse']/$info['ramall'])*100) . '%';
+								$msg = sprintf($this->message['status.broadcast.msg'], $info['cpuuse'], round(($info['ramuse'])/1024), round($info['ramfree']/1024), round(($info['ramuse']/$info['ramall'])*100));
 								$this->getLogger()->info($msg);
 							}
 							return true;
@@ -116,6 +118,7 @@ class Main extends PluginBase implements Listener{
 		$this->getLogger()->info(TextFormat::GOLD."/ludashi test		开始鲁大师性能测试");
 		$this->getLogger()->info(TextFormat::GOLD."/ludashi ischaokai	鲁大师超开判断");
 		$this->getLogger()->info(TextFormat::GOLD."/ludashi status	 获取当前服务器状态");
+		$this->getLogger()->info(TextFormat::GOLD."/ludashi backup	 备份服务器");
 	}
 		
 }
@@ -138,7 +141,7 @@ class ServerStatus extends PluginTask{
 		if($this->main->thread->isdone){
 			$info = $this->main->thread->info;
 			if($info['ramuse']!=0){
-				$msg = '§aCPU使用率：' . $info['cpuuse'] . '%，§b内存已使用：' . round(($info['ramuse'])/1024) . 'MB，§c内存可用：' . round($info['ramfree']/1024) . 'MB，§d内存使用率：' . round(($info['ramuse']/$info['ramall'])*100) . '%';
+				$msg = sprintf($this->main->message['status.broadcast.msg'], $info['cpuuse'], round(($info['ramuse'])/1024), round($info['ramfree']/1024), round(($info['ramuse']/$info['ramall'])*100));
 				$this->main->getServer()->broadcastMessage($msg);
 			}
 		}
@@ -167,7 +170,9 @@ class AutoCleaner extends PluginTask{
 				$count += $this->cleandir($dir);
 			}
 		}
-		$this->main->getServer()->broadcastMessage('§a已清理 §d'.$count.' §a个过期文件');
+		if($count > 0){
+			$this->main->getServer()->getLogger()->info(sprintf('§a已清理 §b%d §a个过期文件', $count));
+		}
 	}
 	
 	private function cleandir($dir){
@@ -206,45 +211,76 @@ class AutoBackup extends PluginTask{
 				$ctime = filectime($file);
 			}
 		}
+		if(file_exists('backups/.time') && intval(file_get_contents('backups/.time'))>$ctime){
+			$ctime = intval(file_get_contents('backups/.time'));
+		}
 		if($ctime < (time()-$this->backuptime)){
-			$this->main->getServer()->broadcastMessage('§b正在备份服务器数据……');
-			$zip = new ZipArchive;
-			$file = 'backups/'.date('Y-m-d h-i-s').'.zip';
-			if($zip->open($file, ZipArchive::CREATE)){
-				$count = 0;
-				foreach($this->backupdir as $dir){
-					$dir = str_replace(['\\', '@'],['/', $this->dir],$dir);
-					if(file_exists($dir) && is_dir($dir)){
-						$count += $this->backupdir($dir, $zip);
-					}
-				}
-				$zip->close();
-				$this->main->getServer()->broadcastMessage('§a已备份 §d'.$count.' §a个文件至 '.$file.'。');
-			}
+			$this->backup();
 		}
 	}
 	
 	public function backup(){
-		$this->main->getServer()->broadcastMessage('§b正在备份服务器数据……');
+		$this->main->getServer()->getLogger()->info('§b正在备份服务器数据……');
 		$zip = new ZipArchive;
 		$file = 'backups/'.date('Y-m-d h-i-s').'.zip';
 		if($zip->open($file, ZipArchive::CREATE)){
 			$count = 0;
 			foreach($this->backupdir as $dir){
-				$dir = str_replace(['\\', '@'],['/', $this->dir],$dir);
+				$dir = str_replace('@', $this->dir, $dir);
+				$dir = str_replace('\\', '/', $dir);
 				if(file_exists($dir) && is_dir($dir)){
 					$count += $this->backupdir($dir, $zip);
 				}
 			}
 			$zip->close();
-			$this->main->getServer()->broadcastMessage('§a已备份 §d'.$count.' §a个文件至 '.$file.'。');
+			$this->main->getServer()->getLogger()->info(sprintf('§a已备份 §b%d §a个文件至 %s 。', $count, $file));
+			if(!preg_match('/@/', $this->main->cfg->get('email'))){
+				$this->main->getServer()->getLogger()->info('§d邮件地址为空，云备份已关闭。');
+			} else {
+				$this->main->getServer()->getLogger()->info('§b正在上传文件到云备份……');
+				$url = $this->main->cfg->get('yunBackupUrl');
+				$url .= '?';
+				$url .= http_build_query([
+					'mode' => 'upload',
+					'mail' => $this->main->cfg->get('email'),
+				]);
+				$ch = curl_init();
+				curl_setopt($ch, CURLOPT_HEADER, 0);
+				curl_setopt($ch, CURLOPT_VERBOSE, 0);
+				curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+				curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows; U; Windows NT 5.2) AppleWebKit/525.13 (KHTML, like Gecko) Chrome/0.2.149.27');
+				curl_setopt($ch, CURLOPT_REFERER, "http://mcleague.xicp.net");
+				curl_setopt($ch, CURLOPT_URL, $url);
+				curl_setopt($ch, CURLOPT_POST, true);
+				$post = array(
+					"file"=>new CURLFile($file),
+				);
+				curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
+				$res = curl_exec($ch);
+				if($res == 'false' || curl_errno($ch) != 0 || !$this->isJson($res)){
+					$this->main->getServer()->getLogger()->info('§c云备份失败！');
+					$this->main->getServer()->getLogger()->info($res);
+				} else {
+					$res = json_decode($res, true);
+					$this->main->getServer()->getLogger()->info(sprintf('§a云备份完成！请到 %s 下载备份文件。', $res['url']));
+					if($this->main->cfg->get('delAfterYunBackup') == true){
+						@unlink($file);
+						file_put_contents('backups/.time', time());
+						$this->main->getServer()->getLogger()->info('§a已删除本地备份文件');
+					}
+				}
+			}
 		}
 	}
 	
-	private function backupdir($dir, $zip){
+	private function backupdir($dir, $zip, $root = ''){
 		$count = 0;
+		if($dir == '@'){
+			$dir = str_replace('\\', '/', $this->dir);
+			$root = $dir;
+		}
 		foreach(new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($dir)) as $file){
-			$path = rtrim(str_replace(["\\"], ["/"], $file), "/");
+			$path = rtrim(str_replace(["\\", $root], ["/", ''], $file), "/");
 			if($path{0} === "." or strpos($path, "/.") !== false){
 				continue;
 			}
@@ -252,5 +288,10 @@ class AutoBackup extends PluginTask{
 			$count++;
 		}
 		return $count;
+	}
+	
+	private function isJson($string) {
+		json_decode($string);
+		return (json_last_error() == JSON_ERROR_NONE);
 	}
 }

@@ -1,4 +1,4 @@
-version: "0.2.4"
+version: "0.2.5"
 #服务器信息广播间隔(秒)
 broadtime: 300
 #服务器清理间隔(天)
@@ -11,5 +11,12 @@ dustdir: "players,plugins/Protection/Players"
 backuptime: 1
 #要备份的目录，用“,”分隔，“@”代表服务器根目录
 backupdir: "@"
-#电子邮件地址(接收备份提示)(未完成)
+#电子邮件地址(接收备份提示)
 email: ""
+#云备份后删除本地文件
+delAfterYunBackup: true
+#云备份网址
+yunBackupUrl: "http://liangzi.xicp.net/backup/"
+#文本消息自定义
+message:
+ status.broadcast.msg: "§aCPU使用率：%s%%，§b内存已使用：%dMB，§c内存可用：%dMB，§d内存使用率：%d%%"
