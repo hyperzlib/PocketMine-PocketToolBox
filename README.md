@@ -6,9 +6,10 @@
 
 #### 指令集
 ```bash
-ludashi test #开启跑分测试，测试cpu、io、同服mc服务器数量并加入全国排行
-ludashi status #查看服务器实时信息
-ludashi ischaokai #判断是否超开
+ludashi test        #开启跑分测试，测试cpu、io、同服mc服务器数量并加入全国排行
+ludashi status      #查看服务器实时信息
+ludashi ischaokai   #判断是否超开
+ludashi backup      #服务器备份
 ```
 
 #### 正在开发
