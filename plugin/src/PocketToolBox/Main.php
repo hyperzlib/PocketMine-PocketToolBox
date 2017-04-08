@@ -1,6 +1,6 @@
 <?php
 // Made By chs
-namespace LuDaShi;
+namespace PocketToolBox;
 
 use pocketmine\utils\Config;
 use pocketmine\command\Command;
@@ -11,8 +11,8 @@ use pocketmine\utils\TextFormat;
 use pocketmine\event\Listener;
 use pocketmine\math\Vector3;
 
-use LuDaShi\test;
-use LuDaShi\Status;
+use PocketToolBox\test;
+use PocketToolBox\Status;
 
 use \ZipArchive;
 use \CURLFile;
@@ -32,7 +32,7 @@ class Main extends PluginBase implements Listener{
 		$this->saveResource("status.vbs", false);
 		$this->cfg = new Config($this->getDataFolder()."config.yml",Config::YAML,array());
 		$uname = php_uname();
-		$this->getLogger()->info(TextFormat::AQUA.'鲁大师插件已启动');
+		$this->getLogger()->info(TextFormat::AQUA.'口袋工具箱已启动');
 		$version = explode(' ', $this->getFullName());
 		$version = str_replace('v', '', $version[1]);
 		if($this->cfg->get('version') != $version){
@@ -68,7 +68,7 @@ class Main extends PluginBase implements Listener{
 	
 	public function onCommand(CommandSender $sender, Command $command, $label, array $args){
 		switch($command->getName()){
-			case 'ludashi':
+			case 'ptb':
 				if(isset($args[0])){
 					switch($args[0]){
 						case 'test':
@@ -114,11 +114,11 @@ class Main extends PluginBase implements Listener{
 	}
 	
 	public function commandHelp(){
-		$this->getLogger()->info(TextFormat::GREEN.'----------鲁大师插件----------');
-		$this->getLogger()->info(TextFormat::GOLD."/ludashi test		开始鲁大师性能测试");
-		$this->getLogger()->info(TextFormat::GOLD."/ludashi ischaokai	鲁大师超开判断");
-		$this->getLogger()->info(TextFormat::GOLD."/ludashi status	 获取当前服务器状态");
-		$this->getLogger()->info(TextFormat::GOLD."/ludashi backup	 备份服务器");
+		$this->getLogger()->info(TextFormat::GREEN.'----------PocketToolBox----------');
+		$this->getLogger()->info(TextFormat::GOLD."/ptb test		开始性能测试");
+		$this->getLogger()->info(TextFormat::GOLD."/ptb ischaokai	超开判断");
+		$this->getLogger()->info(TextFormat::GOLD."/ptb status	 	获取当前服务器状态");
+		$this->getLogger()->info(TextFormat::GOLD."/ptb backup	 	备份服务器");
 	}
 		
 }

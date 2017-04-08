@@ -1,5 +1,5 @@
 <?php
-namespace LuDaShi;
+namespace PocketToolBox;
 
 use Thread;
 
@@ -10,10 +10,10 @@ class Status extends Thread{
 	
 	public function run(){
 		if(preg_match('/win/', strtolower(PHP_OS))){
-			if(!file_exists(dirname(dirname(dirname(dirname(__FILE__)))).'\\LuDaShi\\status.vbs')){
-				copy(dirname(__FILE__).'\\status.vbs', str_replace('phar://', '',dirname(dirname(dirname(dirname(__FILE__))))).'\\LuDaShi\\status.vbs');
+			if(!file_exists(dirname(dirname(dirname(dirname(__FILE__)))).'\\PocketToolBox\\status.vbs')){
+				copy(dirname(__FILE__).'\\status.vbs', str_replace('phar://', '',dirname(dirname(dirname(dirname(__FILE__))))).'\\PocketToolBox\\status.vbs');
 			}
-			$status = popen('cscript '.str_replace('phar://', '', dirname(dirname(dirname(dirname(__FILE__))))).'\\LuDaShi\\status.vbs', 'r');
+			$status = popen('cscript '.str_replace('phar://', '', dirname(dirname(dirname(dirname(__FILE__))))).'\\PocketToolBox\\status.vbs', 'r');
 			fgets($status, 1024);
 			fgets($status, 1024);
 			fgets($status, 1024);
