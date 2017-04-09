@@ -15,7 +15,7 @@
 
 name: PocketToolBox
 main: PocketToolBox\Main
-version: 0.2.6
+version: 0.2.7
 api: [1.12.0]
 load: POSTWORLD
 author: hyperzlib

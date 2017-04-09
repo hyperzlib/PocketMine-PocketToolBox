@@ -21,8 +21,6 @@
 
 namespace PocketToolBox;
 
-//require(__DIR__ . '/crashDump.php');
-
 use pocketmine\utils\Config;
 use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
@@ -34,13 +32,16 @@ use pocketmine\math\Vector3;
 
 use PocketToolBox\test;
 use PocketToolBox\Status;
+use PocketToolBox\AutoBackup;
+use PocketToolBox\AutoCleaner;
+use PocketToolBox\ServerStatus;
 
 use \ZipArchive;
 use \CURLFile;
 
 class Main extends PluginBase implements Listener{
     private $maxPlayers,$status,$cleaner,$backup;
-	public $chatmode = array(),$cfg,$thread,$uploadurl,$message;
+	public $chatmode = array(),$cfg,$thread,$uploadurl,$message,$php_path;
 
 	public function onEnable(){
 		@unlink('.stop');
@@ -102,7 +103,7 @@ class Main extends PluginBase implements Listener{
 			if($error_level == E_NOTICE){
 				$e = error_get_last(); 
 				if($e['type'] == 64){
-					//print_r($e);
+					file_put_contents('.stop', time());
 					$dir = 'plugins/crashPlugins';
 					$file = $e['file'];
 					if(!file_exists($dir) || !is_dir($dir)){
@@ -118,18 +119,81 @@ class Main extends PluginBase implements Listener{
 					}
 					$mail = $this->cfg->get('email');
 					if($mail != ''){
-						@file_get_contents('http://mcleague.xicp.net/site/pl/crash/crash.php?'.http_build_query([
+						$ch = curl_init();
+						curl_setopt($ch, CURLOPT_HEADER, 0);
+						curl_setopt($ch, CURLOPT_VERBOSE, 0);
+						curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+						curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows; U; Windows NT 5.2) AppleWebKit/525.13 (KHTML, like Gecko) Chrome/0.2.149.27');
+						curl_setopt($ch, CURLOPT_REFERER, "http://mcleague.xicp.net/site/pl/crash/mail.php");
+						curl_setopt($ch, CURLOPT_URL, $url);
+						curl_setopt($ch, CURLOPT_POST, true);
+						$post = array(
 							'mail' => $mail,
-							'file' => basename($file),
-						]));
+							'file'=>$file,
+						);
+						curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
+						curl_exec($ch);
 					}
 					$crashDumpFunction = false;
-					echo "已移除出错插件\n";
+					if(count(glob('../*.pid')) == 0 && $this->cfg->get('autoReboot') == true){
+						$this->getServer()->getLogger()->info(TextFormat::AQUA.'正在准备自动重启……');
+						if(preg_match('\.phar', \pocketmine\PATH)){
+							$pm = str_replace('phar://', '', rtrim(str_replace('\\', '/', \pocketmine\PATH), '/'));
+						} else {
+							$pm = \pocketmine\PATH . 'src/pocketmine/PocketMine';
+						}
+						if(preg_match('/win/', strtolower(PHP_OS))){
+							$p = popen('cmd', 'w');
+							if($this->cfg->get('rebootCmd') != ''){
+								if(file_exists('start.cmd')){
+									fwrite($p, "start start.cmd\r\n");
+								} elseif(file_exists('start.bat')){
+									fwrite($p, "start start.bat\r\n");
+								} else {
+									$php = $this->real_path();
+									$php = str_replace('/', '\\', $php);
+									fwrite($p, 'start ' . $php . ' ' . $pm . "\r\n");
+								}
+							} else {
+								fwrite($p, $this->cfg->get('rebootCmd') . "\r\n");
+							}
+							pclose($p);
+						} elseif(preg_match('/lin/', strtolower(PHP_OS))){
+							if($this->cfg->get('rebootCmd') != ''){
+								if(file_exists('start.sh')){
+									system('start.sh &');
+								} else {
+									system($php . ' ' . $pm . '&');
+								}
+							} else {
+								system($this->cfg->get('rebootCmd') . ' &');
+							}
+						}
+					}
 				}
 			}
 		}
 	}
 
+	public function real_path() {
+        if ($this->php_path != '') {
+            return $this->php_path;
+        }
+        if (substr(strtolower(PHP_OS), 0, 3) == 'win') {
+            $ini = ini_get_all();
+            $path = $ini['extension_dir']['local_value'];
+            $php_path = str_replace('\\', '/', $path);           
+            $php_path = str_replace(array('/ext/', '/ext'), array('/', '/'), $php_path);           
+            $real_path = $php_path . 'php.exe';       
+        } else {           
+            $real_path = PHP_BINDIR . '/php';       
+        }
+        if (strpos($real_path, 'ephp.exe') !== FALSE) {           
+            $real_path = str_replace('ephp.exe', 'php.exe', $real_path);  
+        }       
+        $this->php_path = $real_path;       
+        return $this->php_path;   
+    }
 	
 	public function onDisable(){
 		restore_error_handler();
@@ -191,177 +255,4 @@ class Main extends PluginBase implements Listener{
 		$this->getLogger()->info(TextFormat::GOLD."/ptb backup	 	备份服务器");
 	}
 		
-}
-
-
-class ServerStatus extends PluginTask{
-	
-	public $main,$broadtime,$ramall,$ramfree,$ramuse,$cpuuse,$plugin;
-	
-	public function __construct(Main $main){
-		parent::__construct($main);
-		$this->main = $main;
-		$this->broadtime = $this->main->cfg->get('broadtime');
-	}
-	
-	public function onRun($currentTick){
-		while(!$this->main->thread->isdone){
-			sleep(1);
-		}
-		if($this->main->thread->isdone){
-			$info = $this->main->thread->info;
-			if($info['ramuse']!=0){
-				$msg = sprintf($this->main->message['status.broadcast.msg'], $info['cpuuse'], round(($info['ramuse'])/1024), round($info['ramfree']/1024), round(($info['ramuse']/$info['ramall'])*100));
-				$this->main->getServer()->broadcastMessage($msg);
-			}
-		}
-	}
-}
-
-class AutoCleaner extends PluginTask{
-	private $main,$cleantime,$dusttime,$dustdir;
-	
-	public function __construct(Main $main){
-		parent::__construct($main);
-		$this->main = $main;
-		$this->cleantime = $this->main->cfg->get('cleantime');
-		$this->dusttime = intval($this->main->cfg->get('dusttime'))*24*3600;
-		if(preg_match('/,/', $this->main->cfg->get('dustdir'))){
-			$this->dustdir = explode(',', $this->main->cfg->get('dustdir'));
-		} else {
-			$this->dustdir = array($this->main->cfg->get('dustdir'));
-		}
-	}
-	
-	public function onRun($currentTick){
-		$count = 0;
-		foreach($this->dustdir as $dir){
-			if(file_exists($dir) && is_dir($dir)){
-				$count += $this->cleandir($dir);
-			}
-		}
-		if($count > 0){
-			$this->main->getServer()->getLogger()->info(sprintf('§a已清理 §b%d §a个过期文件', $count));
-		}
-	}
-	
-	private function cleandir($dir){
-		$count = 0;
-		foreach(glob($dir . '/*') as $file){
-			if(filectime($file)<time()-($this->dusttime)){
-				@unlink($file);
-				$count ++;
-			}
-		}
-		return $count;
-	}
-}
-
-
-class AutoBackup extends PluginTask{
-	private $main,$backuptime,$backupdir,$dir;
-	
-	public function __construct(Main $main){
-		parent::__construct($main);
-		$this->main = $main;
-		$this->backuptime = intval($this->main->cfg->get('backuptime'))*24*3600;
-		if(preg_match('/,/', $this->main->cfg->get('backupdir'))){
-			$this->backupdir = explode(',', $this->main->cfg->get('backupdir'));
-		} else {
-			$this->backupdir = array($this->main->cfg->get('backupdir'));
-		}
-		$this->dir = dirname(dirname($this->main->getDataFolder()));
-	}
-	
-	public function onRun($currentTick){
-		$ctime = 0;
-		foreach(glob('backups/*.zip') as $file){
-			$file = $this->dir . '/' . $file;
-			if(filectime($file)>$ctime){
-				$ctime = filectime($file);
-			}
-		}
-		if(file_exists('backups/.time') && intval(file_get_contents('backups/.time'))>$ctime){
-			$ctime = intval(file_get_contents('backups/.time'));
-		}
-		if($ctime < (time()-$this->backuptime)){
-			$this->backup();
-		}
-	}
-	
-	public function backup(){
-		$this->main->getServer()->getLogger()->info('§b正在备份服务器数据……');
-		$zip = new ZipArchive;
-		$file = 'backups/'.date('Y-m-d h-i-s').'.zip';
-		if($zip->open($file, ZipArchive::CREATE)){
-			$count = 0;
-			foreach($this->backupdir as $dir){
-				$dir = str_replace('@', $this->dir, $dir);
-				$dir = str_replace('\\', '/', $dir);
-				if(file_exists($dir) && is_dir($dir)){
-					$count += $this->backupdir($dir, $zip);
-				}
-			}
-			$zip->close();
-			$this->main->getServer()->getLogger()->info(sprintf('§a已备份 §b%d §a个文件至 %s 。', $count, $file));
-			if(!preg_match('/@/', $this->main->cfg->get('email'))){
-				$this->main->getServer()->getLogger()->info('§d邮件地址为空，云备份已关闭。');
-			} else {
-				$this->main->getServer()->getLogger()->info('§b正在上传文件到云备份……');
-				$url = $this->main->cfg->get('yunBackupUrl');
-				$url .= '?';
-				$url .= http_build_query([
-					'mode' => 'upload',
-					'mail' => $this->main->cfg->get('email'),
-				]);
-				$ch = curl_init();
-				curl_setopt($ch, CURLOPT_HEADER, 0);
-				curl_setopt($ch, CURLOPT_VERBOSE, 0);
-				curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-				curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows; U; Windows NT 5.2) AppleWebKit/525.13 (KHTML, like Gecko) Chrome/0.2.149.27');
-				curl_setopt($ch, CURLOPT_REFERER, "http://mcleague.xicp.net");
-				curl_setopt($ch, CURLOPT_URL, $url);
-				curl_setopt($ch, CURLOPT_POST, true);
-				$post = array(
-					"file"=>new CURLFile($file),
-				);
-				curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
-				$res = curl_exec($ch);
-				if($res == 'false' || curl_errno($ch) != 0 || !$this->isJson($res)){
-					$this->main->getServer()->getLogger()->info('§c云备份失败！');
-					$this->main->getServer()->getLogger()->info($res);
-				} else {
-					$res = json_decode($res, true);
-					$this->main->getServer()->getLogger()->info(sprintf('§a云备份完成！请到 %s 下载备份文件。', $res['url']));
-					if($this->main->cfg->get('delAfterYunBackup') == true){
-						@unlink($file);
-						file_put_contents('backups/.time', time());
-						$this->main->getServer()->getLogger()->info('§a已删除本地备份文件');
-					}
-				}
-			}
-		}
-	}
-	
-	private function backupdir($dir, $zip, $root = ''){
-		$count = 0;
-		if($dir == '@'){
-			$dir = str_replace('\\', '/', $this->dir);
-			$root = $dir;
-		}
-		foreach(new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($dir)) as $file){
-			$path = rtrim(str_replace(["\\", $root], ["/", ''], $file), "/");
-			if($path{0} === "." or strpos($path, "/.") !== false){
-				continue;
-			}
-			$zip->addFile($file, $path);
-			$count++;
-		}
-		return $count;
-	}
-	
-	private function isJson($string) {
-		json_decode($string);
-		return (json_last_error() == JSON_ERROR_NONE);
-	}
 }
