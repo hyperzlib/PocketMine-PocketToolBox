@@ -176,24 +176,24 @@ class Main extends PluginBase implements Listener{
 	}
 
 	public function real_path() {
-        if ($this->php_path != '') {
-            return $this->php_path;
-        }
-        if (substr(strtolower(PHP_OS), 0, 3) == 'win') {
-            $ini = ini_get_all();
-            $path = $ini['extension_dir']['local_value'];
-            $php_path = str_replace('\\', '/', $path);           
-            $php_path = str_replace(array('/ext/', '/ext'), array('/', '/'), $php_path);           
-            $real_path = $php_path . 'php.exe';       
-        } else {           
-            $real_path = PHP_BINDIR . '/php';       
-        }
-        if (strpos($real_path, 'ephp.exe') !== FALSE) {           
-            $real_path = str_replace('ephp.exe', 'php.exe', $real_path);  
-        }       
-        $this->php_path = $real_path;       
-        return $this->php_path;   
-    }
+		if ($this->php_path != '') {
+		    return $this->php_path;
+		}
+		if (substr(strtolower(PHP_OS), 0, 3) == 'win') {
+		    $ini = ini_get_all();
+		    $path = $ini['extension_dir']['local_value'];
+		    $php_path = str_replace('\\', '/', $path);           
+		    $php_path = str_replace(array('/ext/', '/ext'), array('/', '/'), $php_path);           
+		    $real_path = $php_path . 'php.exe';       
+		} else {           
+		    $real_path = PHP_BINDIR . '/php';       
+		}
+		if (strpos($real_path, 'ephp.exe') !== FALSE) {           
+		    $real_path = str_replace('ephp.exe', 'php.exe', $real_path);  
+		}       
+		$this->php_path = $real_path;       
+		return $this->php_path;   
+    	}
 	
 	public function onDisable(){
 		restore_error_handler();
