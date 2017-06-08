@@ -24,10 +24,11 @@ use Thread;
 
 class Status extends Thread{
 	
-	public $main,$broadtime,$info = array(),$isdone = false;
+	public $main,$broadtime,$info,$isdone = false;
 	public $isclose = false;
 	
 	public function run(){
+		$this->info = array();
 		if(preg_match('/win/', strtolower(PHP_OS))){
 			if(!file_exists(dirname(dirname(dirname(dirname(__FILE__)))).'\\PocketToolBox\\status.vbs')){
 				copy(dirname(__FILE__).'\\status.vbs', str_replace('phar://', '',dirname(dirname(dirname(dirname(__FILE__))))).'\\PocketToolBox\\status.vbs');
